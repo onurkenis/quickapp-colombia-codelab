@@ -1,0 +1,119 @@
+<template>
+    <!-- Only one root node is allowed in template. -->
+    <div class="container">
+        <text class="title">{{titulo}}</text>
+        <text class="title">{{consulta}}</text>
+        <list id="list">
+          <list-item type="ab" class="elemento" for="{{resultados}}">
+            <text class="listado" onclick="procesar({{$item.name}})">{{$item.name}} {{$item.formatAddress}}</text>
+          </list-item>
+        </list>
+    </div>
+</template>
+
+<style>
+    .container {
+        flex-direction: column;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+    }
+
+    .title {
+        font-size: 50px;
+    }
+
+    .listado{
+      align-content: flex-start;
+      font-size: 40px;
+    }
+
+    .elemento{
+      height: 150px;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      border-color: #0000cd;
+      border-radius: 10px;
+      border-width: 2px;
+      margin-right: 10px;
+      margin-left: 10px;
+    }
+</style>
+
+<script>
+  import fetch from '@system.fetch';
+  import prompt from '@system.prompt';
+  module.exports = {
+    data: {
+      titulo: 'Resultado búsqueda',
+      resultados: []
+    },
+    
+    poststring:function(){
+      var that = this;
+      var i;
+      var codigoRetorno = -1;
+      var cantidad = -1;
+      var apikey = encodeURIComponent("CV5nEvwZGi+uniEahMk1GqWmeWx7ZfxLyt0fB4uSoix/6Oi/EW1+UcEwvMimUDOc/vOJO7rwL7srTb2mPITiyltsRUuw");
+      var datos = JSON.stringify({
+          "location": {
+          "lng": that.longitud,
+          "lat": that.latitud
+          },
+          "radius": 1000,
+          "query": that.tipo,
+          "poiType": "ESTABLISHMENT",
+          "language": "es",
+          "pageIndex": 1,
+          "pageSize": 5,
+          "politicalView": "CN"
+        });
+      console.log(datos);
+      fetch.fetch({
+        url: "https://siteapi.cloud.huawei.com/mapApi/v1/siteService/nearbySearch?key=" + apikey,
+        header : {
+          "Content-Type": "application/json", 
+          "Accept": "application/json"
+        },
+        responseType: "json",
+        data: datos,
+        method:"POST",
+        success: function (ret) {
+          console.log(JSON.stringify(ret))
+          codigoRetorno = JSON.parse(ret.data.returnCode)
+          console.log('Code:' + codigoRetorno); 
+          if (codigoRetorno === 0){
+            cantidad = JSON.parse(ret.data.totalCount)
+            console.log('Cantidad:' + cantidad);
+            if (cantidad > 0){
+              that.resultados = ret.data.sites;
+              for (i=0;i<cantidad;i++){
+                console.log(ret.data.sites[i].name);
+                console.log(ret.data.sites[i].formatAddress);
+              }
+            }
+          }
+        },
+        fail: function (msg, code) {
+          console.log(msg, code);
+        },
+        complete: function () {
+          console.log("complete");
+        }
+      })
+    },
+    onInit: function () {
+      console.log(this.tipo);
+      this.poststring(this.tipo);
+      this.consulta = this.tipo
+    },
+    procesar: function(valor){
+      console.log('El valor es: ' + valor);
+      prompt.showToast({
+        message: valor,
+        duration: "10000",
+        gravity: "center"
+      })
+    }
+  }
+</script>

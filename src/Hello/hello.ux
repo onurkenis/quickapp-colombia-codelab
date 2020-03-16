@@ -1,0 +1,126 @@
+<template>
+  <!-- Only one root node is allowed in template. -->
+  <div class="container">
+    <text class="title">QuickApps Demo</text>
+    <input class="btn" type="button" value="Ubicarme" onclick="getGeolocation"/>
+    <progress if="procesando" class="progreso" type="circular"></progress>
+    <text if="procesando">Obteniendo ubicación...</text>
+    <div if="mostrar" class="objetos">
+      <text>Longitud: {{this.longitud}}</text>
+      <text>Latitud: {{this.latitud}}</text>
+      <div class="item-container">
+        <text class="item-title">Buscar un </text>
+        <div class="item-content">
+          <picker class="picker" type="text" range="{{list}}" value="{{tipo}}" onchange="getTipo" id="picker"></picker>
+        </div>
+      </div>
+    </div>
+    <input if="mostrar" class="btn" type="button" value="Buscar" onclick="showResult"/>
+    
+
+  </div>
+</template>
+
+<style>
+  .container {
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 600px;
+  }
+
+  .title {
+    font-size: 50px;
+  }
+  .btn{
+    background-color: #1e90ff;
+    color: #ffffff;
+    width: 50%;
+  }
+  .objetos{
+    flex-direction: column;
+  }
+
+  .progreso{
+    width: 100px;
+    height: 100px;
+  }
+
+  .picker {
+        flex: 1;
+  }
+  .item-title {
+        padding-left: 30px;
+        padding-bottom: 30px;
+        padding-top: 30px;
+        border-bottom-width: 1px;
+        border-color: #bbbbbb;
+        color: #aaaaaa;
+    }
+    .item-content {
+        background-color: #ffffff;
+        border-bottom-width: 1px;
+        border-color: #bbbbbb;
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+</style>
+
+<script>
+  import geolocation from '@system.geolocation'
+  import router from '@system.router'
+  module.exports = {
+    data: {
+      list: ['hotel', 'colegio', 'restaurante','hospital', 'universidad', 'gimnasio', 'parque', 'iglesia', 'atm', 'supermercado'],
+      mostrar: false,
+      procesando: false,
+      tipo: 'hotel',
+      latitud : 0,
+      longitud : 0
+    },
+    onInit() {
+      this.$page.setTitleBar({
+        text: this.$t('message.hello'),
+        textColor: '#ffffff',
+        backgroundColor: '#007DFF',
+        backgroundOpacity: 0.5,
+        menu: true,
+      });
+    },
+    getTipo: function (e) {
+      this.tipo = e.newValue;
+      console.log(this.tipo);
+    },
+    getGeolocation: function () {
+      var that = this;
+      that.procesando = true;
+      geolocation.getLocation({
+        coordType:"wgs84", 
+        timeout: 30000, //30 seconds
+        success: function (ret) {
+          console.log('geolocation success---------' + JSON.stringify(ret));
+          that.contenido = 'long: ' + JSON.parse(ret.longitude) + ' lat: ' + JSON.parse(ret.latitude);
+          that.mostrar = true; 
+          that.longitud = JSON.parse(ret.longitude);
+          that.latitud = JSON.parse(ret.latitude);
+        },
+        fail: function (erromsg, errocode) {
+          console.log('geolocation.getLocation----------' + errocode + ': ' + erromsg)
+        },
+        complete: function () {
+          console.log('geolocation complete----------')
+          that.procesando = false;
+        }
+      })
+    },
+    showResult: function(){
+      router.push({
+        uri: '/result',
+        params: {
+          tipo: this.tipo,
+          longitud: this.longitud,
+          latitud: this.latitud
+        }
+      });
+    }
+  }
+</script>
